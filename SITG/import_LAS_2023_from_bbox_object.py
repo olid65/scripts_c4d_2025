@@ -4,7 +4,7 @@ import sys
 
 try : import laspy
 except :
-    sys.path.append('/Users/olivierdonze/.local/lib/python3.11/site-packages')
+    sys.path.append('C:\\Users\\olivier.donze\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages')
     import laspy
 
 

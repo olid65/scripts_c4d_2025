@@ -13,16 +13,17 @@ op: c4d.BaseObject | None  # The primary selected object in `doc`. Can be `None`
    MAX_PX est la taille maximale de l'image en pixel
    Ensuite il faut importer les MNT avec avec le script SIG/import MNT geotif dossier complet.py
    Puis découper les MNT avec le script multi_mnt_SITG_02_decoupe_selon_splines.py
-   
+
    ATTENTION si on utilise le WorldElevation il faudra pour l'instant télécharger manuellement chaque url
    -> Lancer plutôt depuis Visual Studio Code parce qu'on peut cmd/cliquer sur les urls (se connecter avant)"""
 
 CONTAINER_ORIGIN =1026473
-MAX_PX = 1024
-URL_BASE = 'https://raster.sitg.ge.ch/arcgis/rest/services/MNA_TERRAIN_COLLECTION/ImageServer'
+MAX_PX = 860
+URL_BASE = 'https://raster.sitg.ge.ch/arcgis/rest/services/MNA_SURFACE_COLLECTION/ImageServer'
+#URL_BASE = 'https://raster.sitg.ge.ch/arcgis/rest/services/MNA_TERRAIN_COLLECTION/ImageServer'
 
 #
-URL_BASE = 'https://elevation.arcgis.com/arcgis/rest/services/WorldElevation/Terrain/ImageServer'
+#URL_BASE = 'https://elevation.arcgis.com/arcgis/rest/services/WorldElevation/Terrain/ImageServer'
 
 
 def emprise_objet(obj, origin):
