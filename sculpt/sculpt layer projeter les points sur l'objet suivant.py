@@ -19,7 +19,7 @@ def getMinMaxY(obj):
 
 def pointsOnSurface(op,mnt,lyr, mask_lst = None):
     grc = c4d.utils.GeRayCollider()
-    grc.Init(mnt)
+    grc.Init(mnt, False)
 
     mg_op = op.GetMg()
     mg_mnt = mnt.GetMg()

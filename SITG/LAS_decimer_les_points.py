@@ -3,7 +3,7 @@ import c4d
 doc: c4d.documents.BaseDocument  # The currently active document.
 op: c4d.BaseObject | None  # The primary selected object in `doc`. Can be `None`.
 
-DENOM = 5
+DENOM = 2
 
 
 def main() -> None:

@@ -10,7 +10,7 @@ NB_GROW = 1
 def selectContourEdge():
 
     nb = c4d.utils.Neighbor()
-    nb.Init(op)
+    nb.Init(op, False)
     bs = op.GetSelectedEdges(nb,c4d.EDGESELECTIONTYPE_SELECTION)
     bs.DeselectAll()
     for i,poly in enumerate(op.GetAllPolygons()):
@@ -36,7 +36,7 @@ def selectContourEdge():
 
 def selectContourPoints(op):
     nb = c4d.utils.Neighbor()
-    nb.Init(op)
+    nb.Init(op, False)
     bs = op.GetPointS()
     bs.DeselectAll()
     pts_sel = []
@@ -66,7 +66,7 @@ def growPointS(op):
     bs = op.GetPointS()
     ptsS = [i for i in range(op.GetPointCount()) if bs.IsSelected(i)]
     nb = c4d.utils.Neighbor()
-    nb.Init(op)
+    nb.Init(op, False)
     polys = []
     for i in ptsS:
         polys+= nb.GetPointPolys(i)

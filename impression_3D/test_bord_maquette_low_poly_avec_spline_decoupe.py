@@ -28,7 +28,7 @@ def is_clockwise(pts):
 def selectContour(op):
 
     nb = c4d.utils.Neighbor()
-    nb.Init(op)
+    nb.Init(op, False)
     bs = op.GetSelectedEdges(nb,c4d.EDGESELECTIONTYPE_SELECTION)
     bs.DeselectAll()
     for i,poly in enumerate(op.GetAllPolygons()):

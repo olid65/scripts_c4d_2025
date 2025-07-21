@@ -1,12 +1,14 @@
-from typing import Optional
 import c4d
+import shapefile
+from pathlib import Path
+import urllib.request
+import zipfile
 import sys
 
 try : import laspy
 except :
     sys.path.append('C:\\Users\\olivi\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages')
     import laspy
-
 
 CONTAINER_ORIGIN = 1026473
 
@@ -24,74 +26,56 @@ classif ={
             19 :("Points mesurés hors périmètre de l'acquisition","hors_perim", c4d.Vector4d(1, 0.983, 0, 1)),
           }
 
-def empriseObject(obj, origine):
-    geom = obj
-    if not geom.CheckType(c4d.Opoint):
-        geom = geom.GetCache()
-        if not geom.CheckType(c4d.Opoint) : return None
-    mg = obj.GetMg()
-    pts = [p*mg+origine for p in geom.GetAllPoints()]
-    lst_x = [p.x for p in pts]
-    lst_y = [p.y for p in pts]
-    lst_z = [p.z for p in pts]
+doc: c4d.documents.BaseDocument  # The currently active document.
+op: c4d.BaseObject | None  # The primary selected object in `doc`. Can be `None`.
 
-    xmin = min(lst_x)
-    xmax = max(lst_x)
-    ymin = min(lst_y)
-    ymax = max(lst_y)
-    zmin = min(lst_z)
-    zmax = max(lst_z)
-
-    mini = c4d.Vector(xmin,ymin,zmin)
-    maxi = c4d.Vector(xmax,ymax,zmax)
-
-    return mini, maxi
-
-def extract_points_within_bounding_box(las_file_path,  xmin, xmax, ymin, ymax, origine,veget_only = True):
+def extract_points_veget(las_file_path, origine,veget_only = True):
     pts_res = []
     clas = []
     with laspy.open(las_file_path) as file:
 
         for points in file.chunk_iterator(1024):
             #print(f"{count / file.header.point_count * 100}%")
-
             # For performance we need to use copy
             # so that the underlying arrays are contiguous
             x, y = points.x.copy(), points.y.copy()
             classif = points.classification.copy()
             #r,v,b = points.r.copy(), points.v.copy(), points.b.copy()
-            mask = (x >= xmin) & (x <= xmax) & (y >= ymin) & (y <= ymax)
+            #mask = (x >= xmin) & (x <= xmax) & (y >= ymin) & (y <= ymax)
 
             ##################################################################
             #MASK MASK MASK CLASSIFICATION
             ##################################################################
             if veget_only:
-                inside = points[mask & ((classif == 5) | (classif == 4) | (classif == 3))]
+                #inside = points[((classif == 5) | (classif == 4) | (classif == 3))]
+                inside = points[((classif == 5) | (classif == 4))]
+                #inside = points[((classif == 5))]
             else:
-                inside = points[mask]
+                inside = points
             if  inside:
                 pts_res.extend([c4d.Vector(x,y,z)-origine for x,y,z in zip(inside.x,inside.z,inside.y)])
                 clas.extend([c for c in inside.classification])
     return pts_res, clas
 
-doc: c4d.documents.BaseDocument  # The active document
-op: Optional[c4d.BaseObject]  # The active object, None if unselected
-
-def extractLAS(list_fn, bbox,doc, veget_only = True):
+def extractLAS(list_fn,doc, veget_only = True):
     origine = doc[CONTAINER_ORIGIN]
-    xmin,ymin,xmax,ymax = bbox
     for fn in list_fn:
         if not fn.exists():
             print(f"Le fichier {fn} n'existe pas")
             continue
-        pts, lst_classif = extract_points_within_bounding_box(fn, xmin, xmax, ymin, ymax,origine,veget_only=veget_only)
+        pts, lst_classif = extract_points_veget(fn,origine,veget_only=veget_only)
 
         if pts:
             nb_pts = len(pts)
             res = c4d.PolygonObject(nb_pts,0)
+            res.SetName(fn.stem)
             res.SetAllPoints(pts)
             res.Message(c4d.MSG_UPDATE)
             doc.InsertObject(res)
+
+            #A ENLEVER SI ON VEUT LE VERTEX COLOR PAR CLASSE
+            continue
+
             #vertexcolor tag
             tag = c4d.VertexColorTag(len(pts))
             res.InsertTag(tag)
@@ -105,27 +89,39 @@ def extractLAS(list_fn, bbox,doc, veget_only = True):
                     color = class_color[2]
                 else:
                     color = c4d.Vector4d(0, 0, 0, 1)
-    c4d.EventAdd()
+
 
 def main() -> None:
-    #fn = '/Users/olivierdonze/Downloads/2501750_1126250.las'
-    list_fn = [r"C:\Temp\LAS_LIDAR_TEMP\2494250_1120750.las"]
-    if not op:
-        print("pas d'objet sélectionné")
+    """Called by Cinema 4D when the script is being executed.
+    """
+    fn = Path(r"C:\Users\olivi\switchdrive\Mandats\2025_Prairie\lidar_2023.shp")
+
+    path_dir_dwnld = Path(r"C:\Temp\LAS_LIDAR_TEMP")
+    lst_url = []
+    origin = doc[CONTAINER_ORIGIN]
+    if not origin:
+        c4d.gui.MessageDialog("Document non géoréférencé")
         return
-    origine = doc[CONTAINER_ORIGIN]
-    mini,maxi = empriseObject(op, origine)
-    bbox = mini.x,mini.z,maxi.x,maxi.z
-    extractLAS(list_fn, bbox,doc)
-    return
+    with shapefile.Reader(str(fn)) as shp:
+        #lecture du champs 'url_telech' pour chaque enregistrement
+        for record in shp.records():
+            lst_url.append(record['url_telech'])
 
+    lst_fn = []
+    lat_non_present = []
+    for url in lst_url:
+        name = url.split('/')[-1][:-4]
+        fn_las = path_dir_dwnld / Path(name)
+        if fn_las.exists:
+            lst_fn.append(fn_las)
+        else:
+            lat_non_present.append(name)
+    if lat_non_present:
+        rep = c4d.gui.QuestionDialog(f'Il manque {len(lat_non_present)}/{len(lst_url)}. Voulez vous continuer ?')
+        if not rep : return
 
-
-"""
-def state():
-    # Defines the state of the command in a menu. Similar to CommandData.GetState.
-    return c4d.CMD_ENABLED
-"""
+    extractLAS(lst_fn,doc, veget_only = True)
+    c4d.EventAdd()
 
 if __name__ == '__main__':
     main()

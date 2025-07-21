@@ -54,7 +54,7 @@ def main() -> None:
 
     layer = 'CAD_OBJETDIVERS_POLY'
     layer = 'CAD_BATIMENT_HORSOL'
-    layer = 'CAD_DOMROUTIER_OBJETS_NIV0'
+    #layer = 'CAD_DOMROUTIER_OBJETS_NIV0'
     #layer ='CAD_PARCELLE_MENSU'
     url_base = f'https://vector.sitg.ge.ch/arcgis/rest/services/Hosted/{layer}/FeatureServer/0/query'
     #url_base = 'https://vector.sitg.ge.ch/arcgis/rest/services/Hosted/CAD_OBJETDIVERS_POLY/FeatureServer/0/query'

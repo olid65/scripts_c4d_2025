@@ -9,7 +9,7 @@ op: c4d.BaseObject | None  # The primary selected object in `doc`. Can be `None`
 def main() -> None:
     """Called by Cinema 4D when the script is being executed.
     """
-    modulename = 'geopy'
+    modulename = 'requests'
 
     #valable sur mac -> à adpter sur PC !
     pth_python = Path(sys.prefix)/'python'

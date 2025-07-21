@@ -17,13 +17,14 @@ op: c4d.BaseObject | None  # The primary selected object in `doc`. Can be `None`
    ATTENTION si on utilise le WorldElevation il faudra pour l'instant télécharger manuellement chaque url
    -> Lancer plutôt depuis Visual Studio Code parce qu'on peut cmd/cliquer sur les urls (se connecter avant)"""
 
-CONTAINER_ORIGIN =1026473
-MAX_PX = 860
+CONTAINER_ORIGIN = 1026473
+
+MAX_PX = 1024
 URL_BASE = 'https://raster.sitg.ge.ch/arcgis/rest/services/MNA_SURFACE_COLLECTION/ImageServer'
-#URL_BASE = 'https://raster.sitg.ge.ch/arcgis/rest/services/MNA_TERRAIN_COLLECTION/ImageServer'
+URL_BASE = 'https://raster.sitg.ge.ch/arcgis/rest/services/MNA_TERRAIN_COLLECTION/ImageServer'
 
 #
-#URL_BASE = 'https://elevation.arcgis.com/arcgis/rest/services/WorldElevation/Terrain/ImageServer'
+#URL_BASEC = 'https://elevation.arcgis.com/arcgis/rest/services/WorldElevation/Terrain/ImageServer'
 
 
 def emprise_objet(obj, origin):

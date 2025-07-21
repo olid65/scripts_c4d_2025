@@ -16,7 +16,7 @@ op: Optional[c4d.BaseObject]  # The active object, None if unselected
 CONTAINER_ORIGIN = 1026473
 
 #Dossier pour les téléchargements des tuiles
-DIR_DOWNLOAD = Path('/Volumes/My Passport Pro/TEMP/LIDAR_SITG_download')
+DIR_DOWNLOAD = Path(r"C:\Temp\LAS_LIDAR_TEMP")
 
 
 
@@ -182,7 +182,7 @@ class DlgBbox(c4d.gui.GeDialog):
             self.maj_bbox()
             if self.bbox:
                 self.SetString(self.ID_TXT_NB_LIDAR_TILES,f"Il y a {self.nb_tiles} tuiles à télécharger")
-                
+
         if id == self.ID_CHECKBOX_VEGET_ONLY:
             self.veget_only = self.GetBool(self.ID_CHECKBOX_VEGET_ONLY)
 

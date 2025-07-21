@@ -8,13 +8,13 @@ op: c4d.BaseObject | None  # The primary selected object in `doc`. Can be `None`
    mettre l'objet contenant les splines juste après
    l'ordre doit ^être le m^ême pour les deux et dans le nom de chaque MNT
    on doit retrouver le nom de la spline
-   
+
    Attention les MNT seront déplacés un neutre appelés découpe_MNT
    sera créé avec tous les objets booléens
    Il faut ensuite manuellement convertir en objet et supprimer
    ce qui n'est pas MNT"""
-   
-EXTRUSION_VALUE = 5000
+
+EXTRUSION_VALUE = 1000
 
 def decoupe(mnt,sp):
     bool_obj = c4d.BaseObject(c4d.Oboole)
@@ -23,18 +23,21 @@ def decoupe(mnt,sp):
     bool_obj.SetMg(sp.GetMg())
     bool_obj.SetName(mnt.GetName())
     extr = c4d.BaseObject(c4d.Oextrude)
-    
+
     sp_clone = sp.GetClone()
     sp_clone.InsertUnder(extr)
     sp_clone.SetRelPos(c4d.Vector(0))
+    
     extr.InsertUnder(bool_obj)
     extr[c4d.EXTRUDEOBJECT_DIRECTION] = c4d.EXTRUDEOBJECT_DIRECTION_Y
     extr[c4d.EXTRUDEOBJECT_EXTRUSIONOFFSET] = EXTRUSION_VALUE
-    
+
     mnt_mg = mnt.GetMg()
     mnt.InsertUnder(bool_obj)
     mnt.SetMg(mnt_mg)
     
+    sp_clone.SetMg(c4d.Matrix(sp.GetMg()))
+
     return bool_obj
 
 
@@ -46,8 +49,8 @@ def main() -> None:
     res.SetName('decoupes_MNT')
     doc.InsertObject(res)
     doc.AddUndo(c4d.UNDOTYPE_NEWOBJ,res)
-    
-    
+
+
     for mnt,sp in zip(op.GetChildren(),op.GetNext().GetChildren()):
         #on vérifie que le nom de la pièce est bien contenu dans le nom du MNT
         if sp.GetName() in mnt.GetName():
@@ -58,7 +61,7 @@ def main() -> None:
         doc.AddUndo(c4d.UNDOTYPE_CHANGE,mnt)
         boole_obj = decoupe(mnt,sp)
         boole_obj.InsertUnderLast(res)
-    
+
 
     doc.EndUndo()
     c4d.EventAdd()
