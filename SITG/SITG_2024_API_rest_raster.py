@@ -10,6 +10,96 @@ op: c4d.BaseObject | None  # The primary selected object in `doc`. Can be `None`
 URL_BASE = 'https://raster.sitg.ge.ch/arcgis/rest/services'
 #URL_BASE = 'https://ge.ch/sitgags2/rest/services/CARTES_HISTORIQUES'
 
+# Dialogue Cinema4D pour le choix des services
+# avec les chapitres des services sous forme de lignes avec un bouton "sélectionner tout" et un "ne rien sélectionner"
+# pour chaque service, on affiche le nom du service et un bouton pour le sélectionner
+
+class ServiceSelectionDialog(c4d.gui.GeDialog):
+    ID_BTN_ALL = 1000
+    ID_BTN_NONE = 1001
+    ID_GROUP_START = 2000  # Pour les groupes de services
+    ID_CHECKBOX_START = 3000  # Pour les cases à cocher
+    
+    def __init__(self, services):
+        super().__init__()
+        self.services = services
+        self.selected_services = []
+        self.group_ids = {}  # Pour stocker les IDs par groupe
+        self.checkbox_ids = {}  # Pour stocker les IDs des checkboxes
+
+    def CreateLayout(self):
+        self.SetTitle("Sélection des services")
+        
+        # Boutons en haut
+        self.GroupBegin(0, c4d.BFH_SCALEFIT, cols=2, rows=1)
+        self.GroupBorderSpace(0, 20, 10, 10)
+        self.AddButton(self.ID_BTN_ALL, c4d.BFH_LEFT, name="Sélectionner tout")
+        self.AddButton(self.ID_BTN_NONE, c4d.BFH_LEFT, name="Ne rien sélectionner")
+        self.GroupEnd()
+
+        # Groupe défilant pour les services
+        self.ScrollGroupBegin(0, c4d.BFH_SCALEFIT | c4d.BFV_SCALEFIT, c4d.SCROLLGROUP_VERT, inith=300)
+        self.GroupBegin(0, c4d.BFH_SCALEFIT | c4d.BFV_SCALEFIT, cols=1, rows=1)
+
+        group_id = self.ID_GROUP_START
+        checkbox_id = self.ID_CHECKBOX_START
+
+        for label, service_list in sorted(self.services.items()):
+            # Stockage des IDs pour ce groupe
+            self.group_ids[label] = group_id
+            self.checkbox_ids[label] = []
+            
+            # Groupe avec titre et boutons
+            self.GroupBegin(0, c4d.BFH_LEFT, cols=2, rows=1, title=label)
+            self.GroupBorder(c4d.BORDER_WITH_TITLE_BOLD)
+            self.GroupBorderSpace(30, 5, 0, 5)
+            self.AddButton(group_id, c4d.BFH_LEFT, name="Tout")
+            self.AddButton(group_id + 1, c4d.BFH_LEFT, name="Rien")
+            self.GroupEnd()
+            
+            # Cases à cocher pour les services
+            for service in service_list:
+                self.GroupBegin(0, c4d.BFH_SCALEFIT, 1, 1)
+                self.GroupBorderSpace(30, 0, 0, 0)
+                service_name = service.split('_', 1)[-1]
+                self.AddCheckbox(checkbox_id, c4d.BFH_LEFT, 300, 10, name=service_name)
+                self.checkbox_ids[label].append(checkbox_id)
+                checkbox_id += 1
+                self.GroupEnd()
+                
+            self.AddSeparatorH(30)
+            group_id += 2  # +2 car chaque groupe a 2 boutons
+
+        self.GroupEnd()
+        self.GroupEnd()
+
+        self.AddButton(2000, c4d.BFH_CENTER, name="Valider")
+        return True
+
+    def Command(self, id, msg):
+        if id == self.ID_BTN_ALL:  # Sélectionner tout
+            for checkbox_list in self.checkbox_ids.values():
+                for checkbox_id in checkbox_list:
+                    self.SetBool(checkbox_id, True)
+                    
+        elif id == self.ID_BTN_NONE:  # Ne rien sélectionner
+            for checkbox_list in self.checkbox_ids.values():
+                for checkbox_id in checkbox_list:
+                    self.SetBool(checkbox_id, False)
+                    
+        else:
+            # Vérifier si c'est un bouton de groupe
+            for label, group_id in self.group_ids.items():
+                if id == group_id:  # Bouton "Tout" du groupe
+                    for checkbox_id in self.checkbox_ids[label]:
+                        self.SetBool(checkbox_id, True)
+                elif id == group_id + 1:  # Bouton "Rien" du groupe
+                    for checkbox_id in self.checkbox_ids[label]:
+                        self.SetBool(checkbox_id, False)
+
+        return True
+
+
 class Bbox:
     def __init__(self, xmin, ymin, xmax, ymax):
         self.xmin = xmin
@@ -173,6 +263,39 @@ def write_json_file(data:dict,filename:str)->None:
 def main() -> None:
     """Called by Cinema 4D when the script is being executed.
     """
+    url = 'https://raster.sitg.ge.ch/arcgis/rest/services?f=pjson'
+    response = urlopen(url)
+    data = json.loads(response.read())
+    #on vérifie que l'on a bien les services
+    if 'services' not in data:
+        c4d.gui.MessageDialog("No services found in the response.")
+        return
+    services =[service['name'] for service in data['services'] if service['type'] == 'ImageServer']
+
+    #dictionnaire des services avec en étiquette la première partie du nom
+    #et une liste pour des services pour chaque catégorie
+    services_dict = {}
+    for service in services:
+        #on prend la première partie du nom comme étiquette
+        label = service.split('_')[0]
+        if label not in services_dict:
+            services_dict[label] = []
+        services_dict[label].append(service)
+
+    #on imprime le dictionnaire des services par ordre alphabétique
+    # for label, service_list in sorted(services_dict.items()):
+    #     print(f"{label}:")
+    #     for service in sorted(service_list):
+    #         #on imprime le nom du service sans la première partie
+    #         print(f"  - {service.split('_', 1)[-1]}")
+
+    #on ouvre la fenêtre de dialogue pour sélectionner les services
+    dialog = ServiceSelectionDialog(services_dict)
+    if not dialog.Open(c4d.DLG_TYPE_MODAL_RESIZEABLE, defaultw=400, defaulth=300):
+        c4d.gui.MessageDialog("Failed to open the dialog.")
+
+
+    return
     #services = get_all_services()
     #print(services)
 

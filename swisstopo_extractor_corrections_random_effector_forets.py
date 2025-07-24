@@ -5,9 +5,9 @@ doc: c4d.documents.BaseDocument  # The currently active document.
 op: c4d.BaseObject | None  # The primary selected object in `doc`. Can be `None`.
 
 
-"""Sélectionner le neutre Forêts de la maquette swisstopo
-   Remplace tous les effecteur random de la hiérarchie 
-   (attention avec valeurs par défauts"""
+""" Sélectionner le neutre Forêts de la maquette swisstopo
+    Remplace tous les effecteur random de la hiérarchie 
+    (attention avec valeurs par défauts"""
 
 def rdm_effector():
     rdm_effector = c4d.BaseObject(c4d.Omgrandom)
