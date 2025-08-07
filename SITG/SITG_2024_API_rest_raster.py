@@ -19,7 +19,8 @@ class ServiceSelectionDialog(c4d.gui.GeDialog):
     ID_BTN_NONE = 1001
     ID_GROUP_START = 2000  # Pour les groupes de services
     ID_CHECKBOX_START = 3000  # Pour les cases à cocher
-    
+    ID_BTN_OK = 2000  # ID pour le bouton Valider
+
     def __init__(self, services):
         super().__init__()
         self.services = services
@@ -29,7 +30,7 @@ class ServiceSelectionDialog(c4d.gui.GeDialog):
 
     def CreateLayout(self):
         self.SetTitle("Sélection des services")
-        
+
         # Boutons en haut
         self.GroupBegin(0, c4d.BFH_SCALEFIT, cols=2, rows=1)
         self.GroupBorderSpace(0, 20, 10, 10)
@@ -48,7 +49,7 @@ class ServiceSelectionDialog(c4d.gui.GeDialog):
             # Stockage des IDs pour ce groupe
             self.group_ids[label] = group_id
             self.checkbox_ids[label] = []
-            
+
             # Groupe avec titre et boutons
             self.GroupBegin(0, c4d.BFH_LEFT, cols=2, rows=1, title=label)
             self.GroupBorder(c4d.BORDER_WITH_TITLE_BOLD)
@@ -56,7 +57,7 @@ class ServiceSelectionDialog(c4d.gui.GeDialog):
             self.AddButton(group_id, c4d.BFH_LEFT, name="Tout")
             self.AddButton(group_id + 1, c4d.BFH_LEFT, name="Rien")
             self.GroupEnd()
-            
+
             # Cases à cocher pour les services
             for service in service_list:
                 self.GroupBegin(0, c4d.BFH_SCALEFIT, 1, 1)
@@ -66,14 +67,15 @@ class ServiceSelectionDialog(c4d.gui.GeDialog):
                 self.checkbox_ids[label].append(checkbox_id)
                 checkbox_id += 1
                 self.GroupEnd()
-                
+
             self.AddSeparatorH(30)
             group_id += 2  # +2 car chaque groupe a 2 boutons
 
         self.GroupEnd()
         self.GroupEnd()
 
-        self.AddButton(2000, c4d.BFH_CENTER, name="Valider")
+        # Modifier l'ID du bouton Valider pour correspondre à la constante
+        self.AddButton(self.ID_BTN_OK, c4d.BFH_CENTER, name="Valider")
         return True
 
     def Command(self, id, msg):
@@ -81,12 +83,18 @@ class ServiceSelectionDialog(c4d.gui.GeDialog):
             for checkbox_list in self.checkbox_ids.values():
                 for checkbox_id in checkbox_list:
                     self.SetBool(checkbox_id, True)
-                    
+
         elif id == self.ID_BTN_NONE:  # Ne rien sélectionner
             for checkbox_list in self.checkbox_ids.values():
                 for checkbox_id in checkbox_list:
                     self.SetBool(checkbox_id, False)
-                    
+
+        elif id == self.ID_BTN_OK:  # Bouton Valider
+            self.selected_services = self.get_selected_services()
+            # for service in self.selected_services:
+            #     print(service)
+            self.Close()  # Ferme la boîte de dialogue
+
         else:
             # Vérifier si c'est un bouton de groupe
             for label, group_id in self.group_ids.items():
@@ -98,6 +106,16 @@ class ServiceSelectionDialog(c4d.gui.GeDialog):
                         self.SetBool(checkbox_id, False)
 
         return True
+
+    def get_selected_services(self) -> list:
+        """Retourne la liste des services sélectionnés"""
+        selected = []
+        for label, service_list in self.services.items():
+            for i, service in enumerate(service_list):
+                checkbox_id = self.checkbox_ids[label][i]
+                if self.GetBool(checkbox_id):
+                    selected.append(service)
+        return selected
 
 
 class Bbox:
@@ -293,7 +311,17 @@ def main() -> None:
     dialog = ServiceSelectionDialog(services_dict)
     if not dialog.Open(c4d.DLG_TYPE_MODAL_RESIZEABLE, defaultw=400, defaulth=300):
         c4d.gui.MessageDialog("Failed to open the dialog.")
-
+    
+    #si l'utilisateur a fermé on regarde s'il y a des services sélectionnés
+    selected_services = dialog.selected_services
+    if not selected_services:
+        c4d.gui.MessageDialog("No services selected.")
+        return
+    #on affiche les services sélectionnés
+    print("Selected services:")
+    for service in selected_services:
+        print(f"- {service}")
+    print('-' * 40)
 
     return
     #services = get_all_services()

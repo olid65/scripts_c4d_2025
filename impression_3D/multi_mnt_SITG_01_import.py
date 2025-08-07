@@ -20,9 +20,9 @@ op: c4d.BaseObject | None  # The primary selected object in `doc`. Can be `None`
 CONTAINER_ORIGIN = 1026473
 
 MAX_PX = 1024
-URL_BASE = 'https://raster.sitg.ge.ch/arcgis/rest/services/MNA_SURFACE_COLLECTION/ImageServer'
-URL_BASE = 'https://raster.sitg.ge.ch/arcgis/rest/services/MNA_TERRAIN_COLLECTION/ImageServer'
-
+#URL_BASE = 'https://raster.sitg.ge.ch/arcgis/rest/services/MNA_SURFACE_COLLECTION/ImageServer'
+#URL_BASE = 'https://raster.sitg.ge.ch/arcgis/rest/services/MNA_TERRAIN_COLLECTION/ImageServer'
+URL_BASE ='https://raster.sitg.ge.ch/arcgis/rest/services/MNA_SURFACE_2023_03/ImageServer'
 #
 #URL_BASEC = 'https://elevation.arcgis.com/arcgis/rest/services/WorldElevation/Terrain/ImageServer'
 
