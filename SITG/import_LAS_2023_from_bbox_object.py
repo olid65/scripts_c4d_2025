@@ -98,18 +98,48 @@ def extract_points_within_bounding_box(las_file_path,  xmin, xmax, ymin, ymax, o
                 clas.extend([c for c in inside.classification])
     return pts_res, clas
 
+def extract_points_veget(las_file_path, origine,veget_only = True):
+    pts_res = []
+    clas = []
+    print(f"Extraction des points du fichier {las_file_path}")
+    with laspy.open(las_file_path) as file:
+
+        for points in file.chunk_iterator(1024):
+            #print(f"{count / file.header.point_count * 100}%")
+            # For performance we need to use copy
+            # so that the underlying arrays are contiguous
+            x, y = points.x.copy(), points.y.copy()
+            classif = points.classification.copy()
+            #r,v,b = points.r.copy(), points.v.copy(), points.b.copy()
+
+            ##################################################################
+            #MASK MASK MASK CLASSIFICATION
+            ##################################################################
+            if veget_only:
+                inside = points[((classif == 5) | (classif == 4))]
+            else:
+                inside = points
+            if  inside:
+                pts_res.extend([c4d.Vector(x,y,z)-origine for x,y,z in zip(inside.x,inside.z,inside.y)])
+                clas.extend([c for c in inside.classification])
+    return pts_res, clas
+
 doc: c4d.documents.BaseDocument  # The active document
 op: Optional[c4d.BaseObject]  # The active object, None if unselected
 
 def extractLAS(list_fn, bbox,doc, veget_only = True):
     origine = doc[CONTAINER_ORIGIN]
-    xmin,ymin,xmax,ymax = bbox
+    if bbox:
+        xmin,ymin,xmax,ymax = bbox
     for fn in list_fn:
         if not fn.exists():
             print(f"Le fichier {fn} n'existe pas")
             continue
-        pts, lst_classif = extract_points_within_bounding_box(fn, xmin, xmax, ymin, ymax,origine,veget_only=veget_only)
-        print(lst_classif[:5])
+        if bbox:
+            pts, lst_classif = extract_points_within_bounding_box(fn, xmin, xmax, ymin, ymax,origine,veget_only=veget_only)
+        else:
+            pts, lst_classif = extract_points_veget(fn,origine,veget_only=veget_only)
+        #print(lst_classif[:5])
         if pts:
             nb_pts = len(pts)
             res = c4d.PolygonObject(nb_pts,0)
@@ -142,7 +172,7 @@ def main() -> None:
     origine = doc[CONTAINER_ORIGIN]
     mini,maxi = empriseObject(op, origine)
     bbox = mini.x,mini.z,maxi.x,maxi.z
-    extractLAS(list_fn, bbox,doc,veget_only = False)
+    extractLAS(list_fn, bbox,doc,veget_only = True)
     return
 
 

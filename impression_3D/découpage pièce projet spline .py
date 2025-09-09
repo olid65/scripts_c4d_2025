@@ -4,11 +4,19 @@ import time
 
 """sélectionner la spline pour la découpe de la pièce projet
    METTRE L'ALTITUDE DE LA BASE DE LA SPLINE A L?ALTITUDE DE LA BASE DE LA PIECE
+   Les objets à découper doivent être en enfant de l'objet suivant
+
+   Choisir ci dessous si c'est pour la pièce mode -> BOOLEOBJECT_TYPE_INTERSECT
+   si c'est pour trouer -> BOOLEOBJECT_TYPE_SUBTRACT
+
+   Attention : boolobj[c4d.BOOLEOBJECT_HIGHQUALITY] = True
+   ne fonctionne qu'avec des volumes fermés
+   si terrain sans socle mettre sur false
    """
 
 
 MODE = c4d.BOOLEOBJECT_TYPE_INTERSECT
-MODE = c4d.BOOLEOBJECT_TYPE_SUBTRACT
+#MODE = c4d.BOOLEOBJECT_TYPE_SUBTRACT
 
 #pour un mnt de 8Mio de points et 30 tuiles ça a mis 300 secondes -> 5min.
 
@@ -35,7 +43,7 @@ def cut_obj_by_spline(obj,sp) -> None:
 
     #intersection boolean
     boolobj = c4d.BaseObject(c4d.Oboole)
-    boolobj[c4d.BOOLEOBJECT_HIGHQUALITY] = True
+    boolobj[c4d.BOOLEOBJECT_HIGHQUALITY] = False
     boolobj[c4d.BOOLEOBJECT_TYPE] = MODE
     boolobj[c4d.BOOLEOBJECT_SINGLE_OBJECT] = True
 
@@ -44,6 +52,7 @@ def cut_obj_by_spline(obj,sp) -> None:
     obj_clone.InsertUnder(boolobj)
     obj_clone.SetMg(c4d.Matrix(obj.GetMg()))
     doc.InsertObject(boolobj)
+
     #
     res = c4d.utils.SendModelingCommand(command=c4d.MCOMMAND_MAKEEDITABLE,
                                     list=[boolobj],
@@ -68,11 +77,13 @@ def cut_obj_by_spline(obj,sp) -> None:
 def main() -> None:
 
     spline = op
-    extr = extrusion_from_spline(spline)
-
     if not spline or not spline.CheckType(c4d.Ospline):
         c4d.gui.MessageDialog("Il n'y a pas de spline sélectionnée")
         return
+
+    extr = extrusion_from_spline(spline)
+
+
 
     objs_poly = [o for o in op.GetNext().GetChildren() if o.CheckType(c4d.Opolygon)]
 

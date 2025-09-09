@@ -38,8 +38,8 @@ def point_dans_polygone(point, polygone):
 def main() -> None:
     point_obj = op
     spline = point_obj.GetNext()
-    
-    
+
+
     #récupérer la liste de points de la spline
     #et les mettre en relatif de l'objet
     p2v = lambda p: (p.x,p.z)
@@ -50,7 +50,7 @@ def main() -> None:
     for i,p in enumerate(point_obj.GetAllPoints()):
         if point_dans_polygone(p, poly):
             sel.Select(i)
-    
+
     c4d.EventAdd()
 
 """

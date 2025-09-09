@@ -34,8 +34,8 @@ class ThreadDownload(c4d.threading.C4DThread):
         part = 1/self.nb_files_to_download
         pos = (self.id_file_download-1) * part
         avance = downloaded / total_size*part
-        c4d.StatusSetText(f"fichier LIDAR {self.id_file_download} / {self.nb_files_to_download}")
-        c4d.StatusSetBar((pos+avance)*100)
+        c4d.gui.StatusSetText(f"fichier LIDAR {self.id_file_download} / {self.nb_files_to_download}")
+        c4d.gui.StatusSetBar((pos+avance)*100)
         #print(f"Téléchargement en cours... {percent:.2f}%")
 
     def Main(self):
@@ -71,7 +71,7 @@ class ThreadDownload(c4d.threading.C4DThread):
             if fn_zip.exists() : fn_zip.unlink(missing_ok=True)
 
         #on remet la status bar à zéro
-        c4d.StatusClear()
+        c4d.gui.StatusClear()
         self.id_file_download =0
         self.id_file_download = 0
 
@@ -121,9 +121,12 @@ def get_tiles_within_bounding_box(bounding_box, tile_size=250):
 class DlgBbox(c4d.gui.GeDialog):
 
     ID_BTON_BBOX_OBJECT = 1001
+    ID_BTON_OBJECTS_WITH_NAME_LAS = 1003
     ID_TXT_NB_LIDAR_TILES = 1002
     ID_BTON_DOWNLOAD = 1010
     ID_CHECKBOX_VEGET_ONLY = 1011
+    MODE_BBOX = True
+    MODE_OBJECTS_WITH_NAME_LAS = False
 
     TXT_NO_LIDAR_TILES = "Aucune tuile"
 
@@ -145,6 +148,7 @@ class DlgBbox(c4d.gui.GeDialog):
         self.GroupBorderSpace(self.MARGIN*2, self.MARGIN*2, self.MARGIN*2, self.MARGIN*2)
 
         self.AddButton(self.ID_BTON_BBOX_OBJECT, flags=c4d.BFH_MASK, initw=0, inith=0, name="emprise objet sélectionné")
+        self.AddButton(self.ID_BTON_OBJECTS_WITH_NAME_LAS, flags=c4d.BFH_MASK, initw=0, inith=0, name="objets avec nom LAS")
         self.AddCheckbox(self.ID_CHECKBOX_VEGET_ONLY, flags=c4d.BFH_CENTER,  initw=200, inith=30, name="Végétation seulement")
         self.AddStaticText(self.ID_TXT_NB_LIDAR_TILES, flags=c4d.BFH_CENTER, initw=200, inith=30, name=self.TXT_NO_LIDAR_TILES, borderstyle=c4d.BORDER_WITH_TITLE_BOLD)
         self.AddButton(self.ID_BTON_DOWNLOAD, flags=c4d.BFH_MASK, initw=0, inith=0, name="télécharger les lidar")
@@ -179,8 +183,24 @@ class DlgBbox(c4d.gui.GeDialog):
 
     def Command(self, id, msg):
         if id == self.ID_BTON_BBOX_OBJECT:
+            self.MODE_BBOX = True
+            self.MODE_OBJECTS_WITH_NAME_LAS = False
             self.maj_bbox()
             if self.bbox:
+                self.SetString(self.ID_TXT_NB_LIDAR_TILES,f"Il y a {self.nb_tiles} tuiles à télécharger")
+
+        if id == self.ID_BTON_OBJECTS_WITH_NAME_LAS:
+            self.MODE_BBOX = False
+            self.MODE_OBJECTS_WITH_NAME_LAS = True
+            self.bbox = None
+            self.lst_tiles = []
+            self.nb_tiles = 0
+            #on récupère les objets avec le nom LAS dans la scène
+            objects = self.doc.GetActiveObjects(0)
+
+            self.lst_tiles = [f"https://ge.ch/sitg/geodata/SITG/TELECHARGEMENT/LIDAR_2023/{obj.GetName()}.zip" for obj in objects if obj.GetName().endswith('.las')]
+            self.nb_tiles = len(self.lst_tiles)
+            if self.nb_tiles > 0:
                 self.SetString(self.ID_TXT_NB_LIDAR_TILES,f"Il y a {self.nb_tiles} tuiles à télécharger")
 
         if id == self.ID_CHECKBOX_VEGET_ONLY:
@@ -192,12 +212,20 @@ class DlgBbox(c4d.gui.GeDialog):
             if not DIR_DOWNLOAD.is_dir():
                 print("Le dossier de téléchargement n'existe pas")
                 return True
-            #list de tuple url,fn_dest pour envoyer dans le Thread
-            self.dwload_lst = []
+            if self.MODE_BBOX:
+                #list de tuple url,fn_dest pour envoyer dans le Thread
+                self.dwload_lst = []
 
-            for url in self.lst_tiles:
-                name_file = DIR_DOWNLOAD / Path(url.split('/')[-1][:-4])
-                self.dwload_lst.append((url,name_file))
+                for url in self.lst_tiles:
+                    name_file = DIR_DOWNLOAD / Path(url.split('/')[-1][:-4])
+                    self.dwload_lst.append((url,name_file))
+
+            else:
+                #on télécharge les objets avec le nom LAS
+                self.dwload_lst = []
+                for url in self.lst_tiles:
+                    name_file = DIR_DOWNLOAD / Path(url.split('/')[-1][:-4])
+                    self.dwload_lst.append((url,name_file))
 
             if self.dwload_lst :
                 #LANCEMENT DU THREAD

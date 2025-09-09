@@ -15,11 +15,12 @@ URL_BASE = 'https://raster.sitg.ge.ch/arcgis/rest/services'
 # pour chaque service, on affiche le nom du service et un bouton pour le sélectionner
 
 class ServiceSelectionDialog(c4d.gui.GeDialog):
+    # Modification des IDs pour éviter les conflits
     ID_BTN_ALL = 1000
     ID_BTN_NONE = 1001
     ID_GROUP_START = 2000  # Pour les groupes de services
     ID_CHECKBOX_START = 3000  # Pour les cases à cocher
-    ID_BTN_OK = 2000  # ID pour le bouton Valider
+    ID_BTN_OK = 4000  # Changé de 2000 à 4000 pour éviter le conflit
 
     def __init__(self, services):
         super().__init__()

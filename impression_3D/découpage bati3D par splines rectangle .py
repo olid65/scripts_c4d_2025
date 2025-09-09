@@ -42,7 +42,7 @@ def cut_mnt_by_rectangle(mnt,sp,delta = 200) -> None:
 
     #intersection boolean
     boolobj = c4d.BaseObject(c4d.Oboole)
-    boolobj[c4d.BOOLEOBJECT_HIGHQUALITY] = True
+    boolobj[c4d.BOOLEOBJECT_HIGHQUALITY] = False
     boolobj[c4d.BOOLEOBJECT_TYPE] = c4d.BOOLEOBJECT_TYPE_INTERSECT
     boolobj[c4d.BOOLEOBJECT_SINGLE_OBJECT] = True
 
@@ -73,7 +73,7 @@ def cut_mnt_by_rectangle(mnt,sp,delta = 200) -> None:
 
 
 def main() -> None:
-    
+
     bats = op
     if not bats or not bats.CheckType(c4d.Opolygon):
         c4d.gui.MessageDialog("Il n'y a pas d'objet polygonal sélectionné")
@@ -82,15 +82,12 @@ def main() -> None:
     if not splines:
         c4d.gui.MessageDialog("L'objet suivant doit contenir des splines en enfant")
         return
-    
-    if not bats.GetMg() == c4d.Matrix() or not op.GetNext().GetMg() == c4d.Matrix():
-        c4d.gui.MessageDialog("Mettez d'abord les axes à zéro !")
-        return
-    
+
+
     doc.StartUndo()
     for sp in splines:
         cut_mnt_by_rectangle(bats,sp,delta = 200)
-    
+
     doc.EndUndo()
     c4d.EventAdd()
     return
