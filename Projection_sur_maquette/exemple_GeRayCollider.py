@@ -14,14 +14,14 @@ def main() -> None:
     cam = doc.GetFirstObject()
     cube = cam.GetNext()
     cube_inv_mat = ~ cube.GetMg()
-
+    
     pt = cube.GetNext().GetMg().off * cube_inv_mat
-
+    
     grc = c4d.utils.GeRayCollider()
     grc.Init( cube, force=False)
-
+    
     pos_cam = cam.GetMg().off * cube_inv_mat
-
+    
     ray_p = pos_cam
     ray_dir = pt-ray_p
 
@@ -38,9 +38,9 @@ def main() -> None:
             #si l'angle est rasant -> 90°
             #si bien en face 180°
             print(c4d.utils.RadToDeg(angle))
-            print(c4d.utils.RangeMap(angle, math.pi/2, math.pi, 0, 1, True   , None))
+            print(c4d.utils.RangeMap(angle, math.pi/2, math.pi, 0, 1, True   , curve))
 
-
+    
     else:
         print("Pas d'intersection")
 
